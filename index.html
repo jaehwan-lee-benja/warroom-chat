@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>작전판 채팅</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>💬</text></svg>">
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--ink:#151b22;--ink-2:#5a6672;--line:#d8dee5;--line-2:#e7ecf0;--accent:#0e7c99;--accent-soft:#0e7c9915;--live:#1f9d63;--wait:#c07a12;--mono:ui-monospace,"SF Mono",Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--panel:#151b23;--ink:#e6edf3;--ink-2:#8b98a6;--line:#232d38;--line-2:#1d252f;--accent:#3fc1e0;--accent-soft:#3fc1e01a;--live:#3fd18a;--wait:#e0a94a}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);display:flex;flex-direction:column;height:100dvh}
+.hide{display:none!important}
+/* 로그인 */
+#login{margin:auto;max-width:360px;width:90%;text-align:center;padding:24px}
+#login h1{font-size:22px;margin:0 0 6px}
+#login p{color:var(--ink-2);font-size:13px;margin:0 0 20px}
+#email{width:100%;padding:13px 14px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);margin-bottom:10px}
+button{font-family:var(--sans);font-weight:600;font-size:15px;border:none;border-radius:10px;padding:13px 16px;background:var(--accent);color:#fff;cursor:pointer;width:100%}
+button:disabled{opacity:.5}
+#lmsg{font-size:12.5px;color:var(--ink-2);margin-top:12px;min-height:18px;line-height:1.5}
+/* 헤더 */
+#top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex:none}
+#top h2{margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:7px}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--live);display:inline-block}
+#room{margin-left:auto;font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#logout{width:auto;padding:6px 10px;font-size:12px;background:transparent;color:var(--ink-2);border:1px solid var(--line)}
+/* 로그 */
+#log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.msg{display:flex;flex-direction:column;gap:4px;align-items:flex-start;max-width:88%}
+.msg.me{align-self:flex-end;align-items:flex-end}
+.mh{font-family:var(--mono);font-size:10.5px;display:flex;gap:7px;align-items:baseline}
+.snd{font-weight:700}.at{color:var(--ink-2)}.dt{color:var(--ink-2);opacity:.6}
+.bub{background:var(--panel);border:1px solid var(--line);border-left-width:3px;border-radius:12px;padding:9px 12px}
+.msg.me .bub{background:var(--accent-soft)}
+.sub{font-weight:600;font-size:13.5px;line-height:1.35}
+.pv{font-size:12px;color:var(--ink-2);margin-top:4px;line-height:1.4}
+.rd{font-family:var(--mono);font-size:9.5px;margin-top:6px}
+.rd.r{color:var(--live)}.rd.u{color:var(--wait)}
+#empty{margin:auto;color:var(--ink-2);font-family:var(--mono);font-size:13px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head><body>
+
+<div id="login">
+  <h1>💬 작전판 채팅</h1>
+  <p>이메일로 로그인 링크를 받습니다.</p>
+  <input id="email" type="email" placeholder="이메일" autocomplete="email" inputmode="email">
+  <button id="send" onclick="sendLink()">매직링크 보내기</button>
+  <div id="lmsg"></div>
+</div>
+
+<div id="top" class="hide">
+  <h2><span class="pulse"></span>작전판 채팅</h2>
+  <select id="room" onchange="switchRoom()"></select>
+  <button id="logout" onclick="doLogout()">로그아웃</button>
+</div>
+<div id="log" class="hide"></div>
+
+<script>
+const SB_URL='https://rstazttwlghsorpzsugy.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzdGF6dHR3bGdoc29ycHpzdWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMjI4NjAsImV4cCI6MjA5ODY5ODg2MH0.B5zrWLpG5vOFISWQeM8pD3UPBTYPHcmqYkD7rFBN6JM';
+const sb = supabase.createClient(SB_URL, SB_ANON, { db:{schema:'chat'} });
+const P = { conductor:{l:'지휘자',c:'#0e7c99'}, thinkmap:{l:'thinkmap',c:'#2f6fd0'}, integration:{l:'thinksalon',c:'#7a52c8'}, crm:{l:'crm',c:'#c0392b'}, icloud:{l:'icloud',c:'#1f9d63'}, cafe:{l:'cafe',c:'#c07a12'}, pm:{l:'pm',c:'#16a085'}, user:{l:'나(유저)',c:'#d1483f'} };
+const P_ = k => P[k] || { l:k||'?', c:'#7c8894' };
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let curRoom=null, chan=null;
+
+async function sendLink(){
+  const email=document.getElementById('email').value.trim();
+  if(!email){ msg('이메일을 입력하세요.'); return; }
+  document.getElementById('send').disabled=true; msg('보내는 중…');
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin+location.pathname } });
+  document.getElementById('send').disabled=false;
+  msg(error ? ('오류: '+error.message) : '메일함을 확인하세요 — 링크를 누르면 로그인됩니다.');
+}
+function msg(t){ document.getElementById('lmsg').textContent=t; }
+function show(loggedIn){
+  document.getElementById('login').classList.toggle('hide',loggedIn);
+  document.getElementById('top').classList.toggle('hide',!loggedIn);
+  document.getElementById('log').classList.toggle('hide',!loggedIn);
+}
+async function doLogout(){ await sb.auth.signOut(); }
+
+async function loadRooms(){
+  const { data, error } = await sb.from('rooms').select('id,label').order('last_seen_at',{ascending:false});
+  const sel=document.getElementById('room'); sel.innerHTML='';
+  if(error||!data||!data.length){ sel.innerHTML='<option>방 없음</option>'; return; }
+  data.forEach(r=>{ const o=document.createElement('option'); o.value=r.id; o.textContent=r.label||r.id; sel.appendChild(o); });
+  curRoom=data[0].id; sel.value=curRoom;
+}
+async function loadMessages(){
+  if(!curRoom) return;
+  const { data } = await sb.from('messages').select('*').eq('room',curRoom).order('created_at',{ascending:true});
+  const log=document.getElementById('log');
+  if(!data||!data.length){ log.innerHTML='<div id="empty">메시지 없음</div>'; return; }
+  log.innerHTML = data.map(m=>{ const f=P_(m.from_key), t=P_(m.to_key), me=m.from_key==='user';
+    return `<div class="msg ${me?'me':''}">
+      <div class="mh"><span class="snd" style="color:${f.c}">${esc(f.l)}</span><span class="at">@${esc(t.l)}</span></div>
+      <div class="bub" style="border-left-color:${f.c}"><div class="sub">${esc(m.subject)}</div>${m.preview?`<div class="pv">${esc(m.preview)}</div>`:''}<div class="rd ${m.is_read?'r':'u'}">${m.is_read?'✓ 읽음':'◌ 안읽음'}</div></div>
+    </div>`; }).join('');
+  log.scrollTop=log.scrollHeight;
+}
+function subscribe(){
+  if(chan) sb.removeChannel(chan);
+  chan = sb.channel('rt-'+curRoom).on('postgres_changes',{event:'*',schema:'chat',table:'messages',filter:'room=eq.'+curRoom},()=>loadMessages()).subscribe();
+}
+async function switchRoom(){ curRoom=document.getElementById('room').value; await loadMessages(); subscribe(); }
+async function enter(){ await loadRooms(); await loadMessages(); subscribe(); }
+
+sb.auth.onAuthStateChange((_e,session)=>{ show(!!session); if(session) enter(); else if(chan){ sb.removeChannel(chan); chan=null; } });
+sb.auth.getSession().then(({data:{session}})=>{ show(!!session); if(session) enter(); });
+</script>
+</body></html>
