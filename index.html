@@ -38,6 +38,11 @@ button:disabled{opacity:.5}
 .rd{font-family:var(--mono);font-size:9.5px;margin-top:6px}
 .rd.r{color:var(--live)}.rd.u{color:var(--wait)}
 #empty{margin:auto;color:var(--ink-2);font-family:var(--mono);font-size:13px}
+#compose{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:var(--panel);flex:none;align-items:center}
+#compose.hide{display:none!important}
+#to{font-family:var(--mono);font-size:12px;padding:10px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);flex:none;max-width:118px}
+#ctext{flex:1;min-width:0;padding:11px 12px;font-size:16px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink)}
+#cbtn{width:auto;flex:none;padding:11px 15px;font-size:14px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head><body>
@@ -55,6 +60,11 @@ button:disabled{opacity:.5}
   <button id="logout" onclick="doLogout()">로그아웃</button>
 </div>
 <div id="log" class="hide"></div>
+<div id="compose" class="hide">
+  <select id="to"></select>
+  <input id="ctext" placeholder="메시지…" autocomplete="off" onkeydown="if(event.key==='Enter')sendMsg()">
+  <button id="cbtn" onclick="sendMsg()">보내기</button>
+</div>
 
 <script>
 const SB_URL='https://rstazttwlghsorpzsugy.supabase.co';
@@ -75,6 +85,21 @@ function show(loggedIn){
   document.getElementById('login').classList.toggle('hide',loggedIn);
   document.getElementById('top').classList.toggle('hide',!loggedIn);
   document.getElementById('log').classList.toggle('hide',!loggedIn);
+  document.getElementById('compose').classList.toggle('hide',!loggedIn);
+  if(loggedIn) fillRecipients();
+}
+function fillRecipients(){
+  const sel=document.getElementById('to'); if(sel.options.length) return;
+  ['conductor','thinkmap','integration','crm','icloud','cafe','pm'].forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent='@'+P[k].l; sel.appendChild(o); });
+}
+async function sendMsg(){
+  const to=document.getElementById('to').value, ti=document.getElementById('ctext'), text=ti.value.trim();
+  if(!text||!curRoom) return;
+  const btn=document.getElementById('cbtn'); btn.disabled=true;
+  const { error } = await sb.from('messages').insert({ room:curRoom, from_key:'user', to_key:to, subject:text, preview:'', is_read:false, delivered:false, source_file:'user', source_hash:'u-'+Date.now()+'-'+Math.random().toString(36).slice(2) });
+  btn.disabled=false;
+  if(error){ alert('전송 실패: '+error.message); return; }
+  ti.value=''; loadMessages();
 }
 async function doLogout(){ await sb.auth.signOut(); }
 
