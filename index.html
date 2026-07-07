@@ -44,9 +44,8 @@ button:disabled{opacity:.5}
 
 <div id="login">
   <h1>💬 작전판 채팅</h1>
-  <p>이메일로 로그인 링크를 받습니다.</p>
-  <input id="email" type="email" placeholder="이메일" autocomplete="email" inputmode="email">
-  <button id="send" onclick="sendLink()">매직링크 보내기</button>
+  <p>Google 계정으로 로그인하세요.</p>
+  <button id="gbtn" onclick="loginGoogle()">Google로 로그인</button>
   <div id="lmsg"></div>
 </div>
 
@@ -66,13 +65,10 @@ const P_ = k => P[k] || { l:k||'?', c:'#7c8894' };
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let curRoom=null, chan=null;
 
-async function sendLink(){
-  const email=document.getElementById('email').value.trim();
-  if(!email){ msg('이메일을 입력하세요.'); return; }
-  document.getElementById('send').disabled=true; msg('보내는 중…');
-  const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin+location.pathname } });
-  document.getElementById('send').disabled=false;
-  msg(error ? ('오류: '+error.message) : '메일함을 확인하세요 — 링크를 누르면 로그인됩니다.');
+async function loginGoogle(){
+  document.getElementById('gbtn').disabled=true; msg('Google로 이동 중…');
+  const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin+location.pathname } });
+  if(error){ document.getElementById('gbtn').disabled=false; msg('오류: '+error.message); }
 }
 function msg(t){ document.getElementById('lmsg').textContent=t; }
 function show(loggedIn){
