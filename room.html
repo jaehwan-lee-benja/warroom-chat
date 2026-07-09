@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>작전판 회의실</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🏛️</text></svg>">
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--panel-2:#eef1f4;--ink:#151b22;--ink-2:#5a6672;--line:#d8dee5;--line-2:#e7ecf0;--accent:#0e7c99;--accent-soft:#0e7c9915;--live:#1f9d63;--wait:#c07a12;--block:#d1483f;--idle:#7c8894;--live-bg:#1f9d6318;--wait-bg:#c07a1216;--block-bg:#d1483f16;--idle-bg:#7c889418;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--panel:#151b23;--panel-2:#1b232d;--ink:#e6edf3;--ink-2:#8b98a6;--line:#232d38;--line-2:#1d252f;--accent:#3fc1e0;--accent-soft:#3fc1e01a;--live:#3fd18a;--wait:#e0a94a;--block:#f2685c;--idle:#6b7684;--live-bg:#3fd18a1c;--wait-bg:#e0a94a1c;--block-bg:#f2685c1c;--idle-bg:#6b768420}}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--ink);font-family:var(--sans)}
+.hide{display:none!important}
+#login{margin:60px auto;max-width:360px;width:90%;text-align:center;padding:24px}
+#login h1{font-size:22px;margin:0 0 6px}#login p{color:var(--ink-2);font-size:13px;margin:0 0 20px}
+button{font-family:var(--sans);font-weight:600;font-size:15px;border:none;border-radius:10px;padding:13px 16px;background:var(--accent);color:#fff;cursor:pointer}
+button:disabled{opacity:.5}#lmsg{font-size:12.5px;color:var(--ink-2);margin-top:12px;min-height:18px}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 14px 50px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}
+.top h1{margin:0;font-size:18px;font-weight:680;display:flex;align-items:center;gap:8px}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--live);display:inline-block}
+#room{font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.tnav{margin-left:auto;display:flex;gap:6px;align-items:center}
+.tnav a,.tnav button{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--accent);background:none;text-decoration:none;border:1px solid var(--accent);border-radius:7px;padding:5px 9px;width:auto}
+.tnav .lo{color:var(--ink-2);border-color:var(--line)}
+.stale{font-family:var(--mono);font-size:10.5px;color:var(--wait);width:100%}
+.grid{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+.panel+.panel{margin-top:13px}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.ph h2{margin:0;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-2);font-weight:600}
+.count{font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.chip{font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 8px;border-radius:100px;display:inline-flex;align-items:center;gap:5px}
+.chip .dot{width:6px;height:6px;border-radius:50%}
+.c-live{color:var(--live);background:var(--live-bg)}.c-live .dot{background:var(--live)}
+.c-idle{color:var(--idle);background:var(--idle-bg)}.c-idle .dot{background:var(--idle)}
+/* 무대 */
+.stage{display:flex;flex-direction:column;align-items:center}
+.seats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 15px;width:100%}
+.seats.sub{margin-top:6px;opacity:.92}
+.seat{display:flex;flex-direction:column;align-items:center;gap:2px;width:90px;padding-top:2px;cursor:pointer}
+.seats.sub .seat{width:78px}
+.seat:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+.ava{font-size:36px;line-height:1;position:relative;transition:transform .12s}.seat:hover .ava{transform:translateY(-2px)}
+.seats.sub .ava{font-size:27px}.seat.off .ava{opacity:.4;filter:grayscale(1)}
+.stdot{position:absolute;right:-1px;bottom:3px;width:11px;height:11px;border-radius:50%;background:var(--idle);border:2px solid var(--panel)}
+.seat.on .stdot{background:var(--live)}
+.snm{font-weight:660;font-size:12px;text-align:center;line-height:1.2}.seats.sub .snm{font-size:10.5px}
+.sst{font-family:var(--mono);font-size:9px;color:var(--ink-2)}
+.seat.me .snm::after{content:" ⭐"}
+.bub{max-width:150px;min-height:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px 9px;font-size:11px;line-height:1.3;position:relative;margin-bottom:9px;box-shadow:0 2px 7px #0000001f;text-align:center}
+.bub-x{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:132px}
+.bub-tail{position:absolute;left:50%;margin-left:-5px;bottom:-6px;width:10px;height:10px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+.bub-alert{border-color:var(--block);color:var(--block);font-weight:700;background:var(--block-bg)}
+.bub-alert .bub-tail{background:var(--block-bg);border-color:var(--block)}
+.tablepiece{margin:14px 0 16px;min-width:min(430px,90%);padding:11px 20px;border-radius:60px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:9px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.tablepiece .tp-e{font-size:23px}
+/* 내 액션 */
+.acts-wrap{margin-top:13px;border-top:1px dashed var(--line-2);padding-top:11px}
+.ract{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line-2)}.ract:first-child{border-top:none}
+.ract.empty{font-family:var(--mono);color:var(--live);font-size:12.5px}
+.ract-b{flex:1;min-width:0}.ract-t{font-weight:620;font-size:13px}.ract-h{font-size:11.5px;color:var(--accent);margin-top:3px}
+.done-btn{flex:none;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--live);background:var(--live-bg);border:1px solid var(--live);border-radius:7px;padding:5px 12px;cursor:pointer;width:auto}
+.done-btn:hover{background:var(--live);color:#fff}.done-btn:disabled{opacity:.45}
+/* 채팅 */
+.chat-log{max-height:44vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px;-webkit-overflow-scrolling:touch}
+.msg{display:flex;flex-direction:column;gap:3px;align-items:flex-start;max-width:94%}.msg.me{align-self:flex-end;align-items:flex-end;margin-left:auto}
+.msg-head{font-family:var(--mono);font-size:10px;display:flex;gap:6px;align-items:baseline;width:100%}
+.sndr{font-weight:700}.at{color:var(--ink-2)}.mdate{color:var(--ink-2);opacity:.6;margin-left:auto}
+.bubble{background:var(--panel-2);border:1px solid var(--line);border-left-width:3px;border-radius:11px;padding:8px 11px;width:100%}
+.msg.me .bubble{background:var(--accent-soft)}
+.msubj{font-weight:600;font-size:12px;line-height:1.3}.mprev{font-size:11px;color:var(--ink-2);margin-top:3px}
+.mread{font-family:var(--mono);font-size:9px;margin-top:5px}.mread.r{color:var(--live)}.mread.u{color:var(--wait)}
+/* 모니터 */
+.mtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;border-bottom:1px solid var(--line-2);padding-bottom:9px}
+.mtab{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:5px 11px;cursor:pointer;width:auto}
+.mtab.active{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.sub-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin:12px 0 6px}.mon-pane .sub-h:first-child{margin-top:0}
+.rkpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rk{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px}.rk-n{font-family:var(--mono);font-size:21px;font-weight:600;line-height:1}.rk-k{font-family:var(--mono);font-size:9px;color:var(--ink-2);margin-top:5px}
+.mon-row{font-size:12.5px;margin:5px 0;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.pend{color:var(--wait);font-weight:600;font-family:var(--mono);font-size:11px}.clear{color:var(--live);font-family:var(--mono);font-size:11px}
+.meta{font-family:var(--mono);font-size:11px;color:var(--ink-2);margin:5px 0;display:flex;gap:6px;flex-wrap:wrap}.branch{color:var(--ink);background:var(--line-2);border-radius:4px;padding:1px 6px}.dirtyc{color:var(--wait)}
+.rm-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+.rm-dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--idle)}
+.rm-done .rm-dot{background:var(--live)}.rm-wip .rm-dot{background:var(--wait)}.rm-todo .rm-dot{background:var(--line);border:1px solid var(--idle)}
+.rm-t{flex:1}.rm-done .rm-t{color:var(--ink-2)}.rm-s{font-family:var(--mono);font-size:9.5px;color:var(--ink-2)}.rm-block+.rm-block{margin-top:6px}
+.db{border:1px solid var(--line);border-left-width:3px;border-radius:8px;padding:8px 11px;background:var(--panel-2)}.db+.db{margin-top:7px}.db.on{border-left-color:var(--live)}.db.off{border-left-color:var(--idle)}
+.db .dn{font-weight:620;font-size:12.5px;display:flex;justify-content:space-between;gap:8px}.db .ref{font-family:var(--mono);font-size:10px;color:var(--ink-2);margin-top:3px}.db .use{font-size:11px;margin-top:4px}
+.ev{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:5px 0;border-bottom:1px dashed var(--line-2);font-family:var(--mono)}.ev:last-child{border-bottom:none}.ev-dot{width:7px;height:7px;border-radius:50%;flex:none}.ev-t{color:var(--ink-2);font-size:10px}.ev-warn{color:var(--block)}
+.dl-empty{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);opacity:.6}
+/* 모달 */
+.modal{position:fixed;inset:0;background:#00000088;display:flex;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:460px;width:100%;max-height:84vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 44px #00000055}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line);font-size:15px}
+.m-x{background:none;border:none;font-size:15px;color:var(--ink-2);cursor:pointer;width:auto;padding:2px 7px}
+.modal-body{padding:12px 15px;overflow-y:auto;flex:1}
+.m-msg{border-left:3px solid var(--line);background:var(--panel-2);border-radius:9px;padding:8px 11px;margin-bottom:8px}.m-msg.me{border-left-color:var(--accent);background:var(--accent-soft)}
+.m-msg-h{font-family:var(--mono);font-size:10px;color:var(--ink-2);display:flex;gap:6px;align-items:center;margin-bottom:4px}.m-date{margin-left:auto}.m-msg-h .r{color:var(--live)}.m-msg-h .u{color:var(--wait)}
+.m-subj{font-size:12.5px;font-weight:600;line-height:1.35}.m-prev{font-size:11.5px;color:var(--ink-2);margin-top:3px}
+.m-act{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:9px;background:var(--panel-2)}
+.m-act-t{font-weight:640;font-size:13.5px}.m-act-w{font-size:12px;color:var(--ink-2);margin-top:5px}.m-act-h{font-size:12px;color:var(--accent);margin-top:3px}
+.m-empty{font-family:var(--mono);color:var(--ink-2);font-size:12px;padding:10px 2px}
+.modal-compose{padding:11px 15px;border-top:1px solid var(--line);display:flex;gap:8px}.modal-compose:empty{display:none}
+.modal-compose textarea{flex:1;resize:vertical;min-height:38px;max-height:110px;font-family:var(--sans);font-size:16px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink)}
+.m-send{flex:none;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:8px 12px;cursor:pointer;width:auto}
+@media(max-width:840px){.grid{grid-template-columns:1fr}.chat-log{max-height:48vh}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head><body>
+
+<div id="login">
+  <h1>🏛️ 작전판 회의실</h1>
+  <p>Google 계정으로 로그인하세요.</p>
+  <button id="gbtn" onclick="loginGoogle()">Google로 로그인</button>
+  <div id="lmsg"></div>
+</div>
+
+<div id="app" class="wrap hide">
+  <div class="top">
+    <h1><span class="pulse"></span>🏛️ <span id="th-name">회의실</span></h1>
+    <select id="room" onchange="switchRoom()"></select>
+    <div class="tnav">
+      <a href="./index.html">💬 채팅</a>
+      <button class="lo" onclick="doLogout()">로그아웃</button>
+    </div>
+    <div class="stale" id="stale"></div>
+  </div>
+  <div class="grid">
+    <div class="left">
+      <div class="panel">
+        <div class="ph"><h2>회의실</h2><span class="count" id="roomcount"></span></div>
+        <div class="stage">
+          <div class="seats" id="seats-main"></div>
+          <div class="tablepiece" id="table"></div>
+          <div class="seats sub" id="seats-sub"></div>
+        </div>
+        <div class="acts-wrap">
+          <div class="ph"><h2 id="acts-h">⛳ 당신의 액션</h2><span class="count">확인=완료</span></div>
+          <div id="acts"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h2>세션 채팅</h2><span class="count" id="chatcount"></span></div>
+        <div class="chat-log" id="clog"></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="panel">
+        <div class="ph"><h2>🖥 모니터 · 대시보드</h2><span class="count">주제 선택</span></div>
+        <div class="mtabs" id="mtabs"></div>
+        <div id="monbody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="modal hide" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-head"><span id="m-title"></span><button class="m-x" onclick="closeModal()" aria-label="닫기">✕</button></div>
+    <div id="m-body" class="modal-body"></div>
+    <div id="m-compose" class="modal-compose"></div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://rstazttwlghsorpzsugy.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzdGF6dHR3bGdoc29ycHpzdWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMjI4NjAsImV4cCI6MjA5ODY5ODg2MH0.B5zrWLpG5vOFISWQeM8pD3UPBTYPHcmqYkD7rFBN6JM';
+const sb=supabase.createClient(SB_URL,SB_ANON,{db:{schema:'chat'}});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let curRoom=null, chan=null, STATE=null, MSGS=[], curTab='all';
+
+function loginGoogle(){ document.getElementById('gbtn').disabled=true; document.getElementById('lmsg').textContent='Google로 이동 중…';
+  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}}).then(({error})=>{ if(error){document.getElementById('gbtn').disabled=false;document.getElementById('lmsg').textContent='오류: '+error.message;} }); }
+function doLogout(){ sb.auth.signOut(); }
+function show(on){ document.getElementById('login').classList.toggle('hide',on); document.getElementById('app').classList.toggle('hide',!on); }
+
+async function loadRooms(){
+  const {data}=await sb.from('rooms').select('id,label').order('last_seen_at',{ascending:false});
+  const sel=document.getElementById('room'); sel.innerHTML='';
+  if(!data||!data.length){ sel.innerHTML='<option>방 없음</option>'; return; }
+  data.forEach(r=>{ const o=document.createElement('option'); o.value=r.id; o.textContent=r.label||r.id; sel.appendChild(o); });
+  curRoom=data[0].id; sel.value=curRoom;
+}
+async function loadState(){
+  if(!curRoom) return;
+  const {data}=await sb.from('room_state').select('state,updated_at').eq('room',curRoom).maybeSingle();
+  if(!data){ STATE=null; document.getElementById('roomcount').textContent='상태 없음'; return; }
+  STATE=data.state;
+  const age=Math.round((Date.now()-new Date(data.updated_at).getTime())/1000);
+  document.getElementById('stale').textContent = age>90 ? ('⚠ 스냅샷 '+ (age<3600?Math.round(age/60)+'분':Math.round(age/3600)+'시간') +' 전 — 맥 작전판 서버 확인') : '';
+  renderState();
+}
+async function loadMessages(){
+  if(!curRoom) return;
+  const {data}=await sb.from('messages').select('*').eq('room',curRoom).order('created_at',{ascending:true});
+  MSGS=data||[]; renderChat();
+}
+function renderState(){
+  if(!STATE) return;
+  document.getElementById('th-name').textContent='회의실 · '+(STATE.theme?STATE.theme.name:'');
+  document.getElementById('roomcount').textContent='활성 '+(STATE.liveCount||0)+'/4 · '+(STATE.theme?STATE.theme.table+' '+STATE.theme.name:'');
+  document.getElementById('table').innerHTML='<span class="tp-e">'+esc(STATE.theme?STATE.theme.table:'')+'</span> '+esc(STATE.theme?STATE.theme.name:'')+' · 원탁';
+  const seats=STATE.seats||[];
+  document.getElementById('seats-main').innerHTML=seats.filter(s=>!s.sub).map(seatHtml).join('');
+  document.getElementById('seats-sub').innerHTML=seats.filter(s=>s.sub).map(seatHtml).join('');
+  const acts=STATE.actions||[];
+  document.getElementById('acts-h').textContent='⛳ 당신의 액션'+(acts.length?' · '+acts.length:'');
+  document.getElementById('acts').innerHTML = acts.length ? acts.map(a=>
+    '<div class="ract"><div class="ract-b"><div class="ract-t">'+esc(a.ic)+' '+esc(a.title)+'</div>'+(a.how?'<div class="ract-h">→ '+esc(a.how)+'</div>':'')+'</div><button class="done-btn" onclick="doneAction(\''+a.id+'\',this)">확인</button></div>').join('')
+    : '<div class="ract empty">지금 당신이 할 건 없습니다 ✓</div>';
+  renderMonitor();
+}
+function seatHtml(s){
+  let bubble='';
+  if(s.incoming>0) bubble='<div class="bub bub-alert">📥 '+(s.key==='user'?'확인할 액션':'새 메시지')+' '+s.incoming+'<span class="bub-tail"></span></div>';
+  else if(s.last) bubble='<div class="bub"><span class="bub-x">'+esc(s.last).slice(0,52)+'</span><span class="bub-tail"></span></div>';
+  return '<div class="seat '+(s.online?'on':'off')+' '+(s.key==='user'?'me':'')+'" tabindex="0" role="button" onclick="openSeat(\''+s.key+'\')" onkeydown="if(event.key===\'Enter\')openSeat(\''+s.key+'\')">'+bubble+
+    '<div class="ava">'+s.av+'<span class="stdot"></span></div><div class="snm" style="color:'+s.color+'">'+esc(s.label)+'</div><div class="sst">'+(s.online?'활성':'유휴')+'</div></div>';
+}
+function renderChat(){
+  const P={}; (STATE&&STATE.seats||[]).forEach(s=>P[s.key]={l:s.label,c:s.color});
+  const pf=k=>P[k]||{l:k||'?',c:'#7c8894'};
+  document.getElementById('chatcount').textContent=MSGS.length+'건';
+  document.getElementById('clog').innerHTML = MSGS.length ? MSGS.map(m=>{ const f=pf(m.from_key),t=pf(m.to_key),me=m.from_key==='user';
+    return '<div class="msg '+(me?'me':'')+'"><div class="msg-head"><span class="sndr" style="color:'+f.c+'">'+esc(f.l)+'</span><span class="at">@'+esc(t.l)+'</span></div><div class="bubble" style="border-left-color:'+f.c+'"><div class="msubj">'+esc(m.subject)+'</div>'+(m.preview?'<div class="mprev">'+esc(m.preview)+'</div>':'')+'<div class="mread '+(m.is_read?'r':'u')+'">'+(m.is_read?'✓ 읽음':'◌ 안읽음')+'</div></div></div>'; }).join('')
+    : '<div class="dl-empty">메시지 없음</div>';
+  const cl=document.getElementById('clog'); cl.scrollTop=cl.scrollHeight;
+}
+function rmBars(phases){ return (phases||[]).map(p=>'<div class="rm-row rm-'+p.s+'"><span class="rm-dot"></span><span class="rm-t">'+esc(p.t)+'</span><span class="rm-s">'+(p.s==='done'?'완료':p.s==='wip'?'진행':'예정')+'</span></div>').join(''); }
+function renderMonitor(){
+  const tabs=[{id:'all',label:'전체'}].concat((STATE.domains||[]).map(d=>({id:d.code,label:d.label.replace(/ .*/,'')}))).concat([{id:'roadmap',label:'로드맵'}]);
+  document.getElementById('mtabs').innerHTML=tabs.map(t=>'<button class="mtab'+(t.id===curTab?' active':'')+'" onclick="showTab(\''+t.id+'\')">'+esc(t.label)+'</button>').join('');
+  const body=document.getElementById('monbody');
+  if(curTab==='all'){
+    const dbs=(STATE.dbs||[]).map(db=>'<div class="db '+(db.state==='active'?'on':'off')+'"><div class="dn">'+esc(db.name)+' '+(db.state==='active'?'<span class="chip c-live"><span class="dot"></span>active</span>':'<span class="chip c-idle"><span class="dot"></span>off</span>')+'</div><div class="ref">'+esc(db.ref)+'</div><div class="use">'+esc(db.use)+'</div></div>').join('');
+    const evs=(STATE.events||[]).map(e=>{ const on=e.type==='online'; return '<div class="ev'+(e.abrupt?' ev-warn':'')+'"><span class="ev-dot" style="background:'+(on?'var(--live)':e.abrupt?'var(--block)':'var(--idle)')+'"></span><span class="ev-t">'+esc((e.ts||'').slice(11,16))+'</span> <b>'+esc(e.key)+'</b> '+(on?'온라인':e.abrupt?'예기치 종료 ⚠':'종료')+'</div>'; }).join('')||'<div class="dl-empty">상태 변화 없음</div>';
+    body.innerHTML='<div class="rkpis"><div class="rk"><div class="rk-n">'+(STATE.liveCount||0)+'/4</div><div class="rk-k">활성 도메인</div></div><div class="rk"><div class="rk-n">'+((STATE.actions||[]).length)+'</div><div class="rk-k">내 액션</div></div><div class="rk"><div class="rk-n">'+(STATE.pendTotal||0)+'</div><div class="rk-k">미처리</div></div></div><div class="sub-h">DB 토폴로지</div>'+dbs+'<div class="sub-h">세션 이벤트</div>'+evs;
+  } else if(curTab==='roadmap'){
+    body.innerHTML=(STATE.roadmap||[]).map(r=>'<div class="rm-block"><div class="sub-h">'+esc(r.label)+'</div>'+rmBars(r.phases)+'</div>').join('');
+  } else {
+    const d=(STATE.domains||[]).find(x=>x.code===curTab); const r=(STATE.roadmap||[]).find(x=>x.code===curTab);
+    if(!d){ body.innerHTML='<div class="dl-empty">없음</div>'; return; }
+    body.innerHTML='<div class="mon-row"><b>'+esc(d.label)+'</b> '+(d.online?'<span class="chip c-live"><span class="dot"></span>활성</span>':'<span class="chip c-idle"><span class="dot"></span>유휴</span>')+'</div>'+
+      (d.branch?'<div class="meta"><span class="branch">'+esc(d.branch)+' '+esc(d.last)+'</span> · '+esc(d.when)+(d.dirty?' · <span class="dirtyc">▲'+d.dirty+'</span>':'')+'</div>':'')+
+      '<div class="mon-row">인박스 to-'+esc(d.code)+' · '+(d.pending?'<span class="pend">'+d.pending+' 미처리</span>':'<span class="clear">clear ✓</span>')+'</div>'+
+      '<div class="sub-h">로드맵</div>'+(r?rmBars(r.phases):'<div class="dl-empty">없음</div>');
+  }
+}
+function showTab(id){ curTab=id; try{localStorage.setItem('wr_rtab',id);}catch(e){} renderMonitor(); }
+
+function memberOf(key){ return (STATE&&STATE.seats||[]).find(s=>s.key===key)||{key:key,label:key,color:'#888',av:'🧑'}; }
+function openSeat(key){
+  const m=memberOf(key);
+  document.getElementById('m-title').innerHTML=m.av+' <b style="color:'+m.color+'">'+esc(m.label)+'</b>';
+  const body=document.getElementById('m-body'), comp=document.getElementById('m-compose');
+  if(key==='user'){
+    const acts=STATE.actions||[];
+    body.innerHTML=acts.length?acts.map(a=>'<div class="m-act"><div class="m-act-t">'+esc(a.ic)+' '+esc(a.title)+'</div>'+(a.why?'<div class="m-act-w"><b>왜</b> '+esc(a.why)+'</div>':'')+(a.how?'<div class="m-act-h">→ '+esc(a.how)+'</div>':'')+'<button class="done-btn" onclick="doneAction(\''+a.id+'\',this)">확인 완료</button></div>').join(''):'<div class="m-empty">확인할 액션이 없습니다 ✓</div>';
+    comp.innerHTML='';
+  } else {
+    const P={}; (STATE.seats||[]).forEach(s=>P[s.key]={l:s.label,c:s.color});
+    const pf=k=>P[k]||{l:k,c:'#888'};
+    const conv=MSGS.filter(x=>x.from_key===key||x.to_key===key);
+    body.innerHTML=conv.length?conv.map(x=>{ const f=pf(x.from_key),t=pf(x.to_key),me=x.from_key==='user';
+      return '<div class="m-msg '+(me?'me':'')+'"><div class="m-msg-h"><b style="color:'+f.c+'">'+esc(f.l)+'</b> → '+esc(t.l)+' <span class="m-date">'+(x.is_read?'<span class="r">✓</span>':'<span class="u">◌</span>')+'</span></div><div class="m-subj">'+esc(x.subject)+'</div>'+(x.preview?'<div class="m-prev">'+esc(x.preview)+'</div>':'')+'</div>'; }).join(''):'<div class="m-empty">아직 대화가 없습니다.</div>';
+    comp.innerHTML='<textarea id="m-text" placeholder="'+esc(m.label)+' 에게 메시지 보내기 — 인박스에 남습니다"></textarea><button class="m-send" onclick="sendMsg(\''+key+'\')">보내기 →</button>';
+  }
+  document.getElementById('modal').classList.remove('hide');
+}
+function closeModal(){ document.getElementById('modal').classList.add('hide'); }
+async function sendMsg(key){
+  const t=document.getElementById('m-text'); if(!t)return; const v=(t.value||'').trim(); if(!v||!curRoom)return;
+  const b=document.querySelector('.m-send'); if(b){b.disabled=true;b.textContent='…';}
+  const {error}=await sb.from('messages').insert({room:curRoom,from_key:'user',to_key:key,subject:v.slice(0,280),preview:'',is_read:false,delivered:false,source_file:'user',source_hash:'u-'+Date.now()+'-'+Math.random().toString(36).slice(2)});
+  if(error){ if(b){b.disabled=false;b.textContent='보내기 →';} alert('전송 실패: '+error.message); return; }
+  closeModal(); loadMessages();
+}
+async function doneAction(id,btn){
+  if(!curRoom)return; if(btn){btn.disabled=true;btn.textContent='…';}
+  const {error}=await sb.from('messages').insert({room:curRoom,from_key:'user',to_key:'cmd',subject:'done:'+id,preview:'',is_read:true,delivered:false,source_file:'user',source_hash:'u-'+Date.now()+'-'+Math.random().toString(36).slice(2)});
+  if(error){ if(btn){btn.disabled=false;btn.textContent='확인';} return; }
+  // 낙관적 제거 — 서버가 markDone 후 다음 스냅샷에 반영
+  if(STATE&&STATE.actions){ STATE.actions=STATE.actions.filter(a=>a.id!==id); renderState(); }
+  closeModal();
+  setTimeout(loadState,4000);
+}
+async function switchRoom(){ curRoom=document.getElementById('room').value; await loadState(); await loadMessages(); subscribe(); }
+function subscribe(){ if(chan) sb.removeChannel(chan);
+  chan=sb.channel('rt-'+curRoom).on('postgres_changes',{event:'*',schema:'chat',table:'messages',filter:'room=eq.'+curRoom},()=>loadMessages()).subscribe(); }
+async function enter(){ try{curTab=localStorage.getItem('wr_rtab')||'all';}catch(e){} await loadRooms(); await loadState(); await loadMessages(); subscribe(); }
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeModal(); });
+setInterval(()=>{ if(curRoom&&!document.getElementById('app').classList.contains('hide')) loadState(); }, 20000);
+sb.auth.onAuthStateChange((_e,session)=>{ show(!!session); if(session)enter(); else if(chan){sb.removeChannel(chan);chan=null;} });
+sb.auth.getSession().then(({data:{session}})=>{ show(!!session); if(session)enter(); });
+</script>
+</body></html>
