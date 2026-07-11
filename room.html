@@ -33,7 +33,7 @@ button:disabled{opacity:.5}#lmsg{font-size:12.5px;color:var(--ink-2);margin-top:
 .c-live{color:var(--live);background:var(--live-bg)}.c-live .dot{background:var(--live)}
 .c-idle{color:var(--idle);background:var(--idle-bg)}.c-idle .dot{background:var(--idle)}
 /* 무대 */
-.stage{display:flex;flex-direction:column;align-items:center}
+.stage{display:flex;justify-content:center;align-items:flex-start;gap:6px 26px;flex-wrap:wrap}
 .seats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 15px;width:100%}
 .seats.sub{margin-top:6px;opacity:.92}
 .seat{display:flex;flex-direction:column;align-items:center;gap:2px;width:90px;padding-top:2px;cursor:pointer}
@@ -54,7 +54,7 @@ button:disabled{opacity:.5}#lmsg{font-size:12.5px;color:var(--ink-2);margin-top:
 .orgchart{display:flex;flex-direction:column;align-items:center;width:100%}
 .tier{display:flex;justify-content:center;gap:8px 16px;flex-wrap:wrap}
 .conn{width:2px;height:15px;background:var(--line)}
-.overseer-box{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px dashed var(--line);border-radius:14px;padding:6px 20px 8px;background:linear-gradient(180deg,var(--panel-2),transparent)}
+.advisor{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px dashed var(--line);border-radius:14px;padding:7px 16px 9px;background:linear-gradient(180deg,var(--panel-2),transparent);align-self:flex-start;margin-top:12px}
 .overseer-label{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
 .tier-domains{align-items:flex-start;gap:4px 14px;position:relative;padding-top:14px}
 .tier-domains::before{content:"";position:absolute;top:0;left:16%;right:16%;height:2px;background:var(--line)}
@@ -225,13 +225,12 @@ function renderStage(){
   const seats=STATE.seats||[]; const one=r=>seats.find(s=>s.role===r);
   const overseer=one('overseer'), leader=one('leader');
   const domains=seats.filter(s=>s.role==='domain'), subsOf=p=>seats.filter(s=>s.role==='sub'&&s.parent===p);
-  let h='<div class="orgchart">';
-  if(overseer) h+='<div class="tier"><div class="overseer-box"><div class="overseer-label">관제석 · 전체 조망</div>'+seatHtml(overseer)+'</div></div><div class="conn"></div>';
-  if(leader) h+='<div class="tier">'+seatHtml(leader)+'</div><div class="conn"></div>';
-  h+='<div class="tier tier-domains">'+domains.map(function(d){ var subs=subsOf(d.key);
-    return '<div class="branch">'+seatHtml(d)+(subs.length?'<div class="subs">'+subs.map(seatHtml).join('')+'</div>':'')+'</div>'; }).join('')+'</div>';
-  h+='</div>';
-  document.getElementById('stage').innerHTML=h;
+  let org='<div class="orgchart">';
+  if(leader) org+='<div class="tier">'+seatHtml(leader)+'</div><div class="conn"></div>';
+  org+='<div class="tier tier-domains">'+domains.map(function(d){ var subs=subsOf(d.key);
+    return '<div class="branch">'+seatHtml(d)+(subs.length?'<div class="subs">'+subs.map(seatHtml).join('')+'</div>':'')+'</div>'; }).join('')+'</div></div>';
+  const adv=overseer?'<div class="advisor"><div class="overseer-label">외부 고문</div>'+seatHtml(overseer)+'</div>':'';
+  document.getElementById('stage').innerHTML=org+adv;
 }
 function renderChat(){
   const P={}; (STATE&&STATE.seats||[]).forEach(s=>P[s.key]={l:s.label,c:s.color});
