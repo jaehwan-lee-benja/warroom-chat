@@ -212,7 +212,6 @@ function renderState(){
 function seatHtml(s){
   let bubble='';
   if(s.incoming>0) bubble='<div class="bub bub-alert">📥 '+(s.key==='user'?'확인할 액션':'새 메시지')+' '+s.incoming+'<span class="bub-tail"></span></div>';
-  else if(s.last) bubble='<div class="bub"><span class="bub-x">'+esc(s.last).slice(0,52)+'</span><span class="bub-tail"></span></div>';
   return '<div class="seat '+(s.online?'on':'off')+' '+(s.key==='user'?'me':'')+'" tabindex="0" role="button" onclick="openSeat(\''+s.key+'\')" onkeydown="if(event.key===\'Enter\')openSeat(\''+s.key+'\')">'+bubble+
     '<div class="ava">'+s.av+'<span class="stdot"></span></div><div class="snm" style="color:'+s.color+'">'+esc(s.label)+'</div><div class="sst">'+(s.online?'활성':'유휴')+'</div></div>';
 }
