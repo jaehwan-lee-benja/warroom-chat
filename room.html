@@ -286,10 +286,9 @@ function openSeat(key){
 function closeModal(){ document.getElementById('modal').classList.add('hide'); }
 async function sendMsg(key){
   const t=document.getElementById('m-text'); if(!t)return; const v=(t.value||'').trim(); if(!v||!curRoom)return;
-  const b=document.querySelector('.m-send'); if(b){b.disabled=true;b.textContent='…';}
+  MSGS.push({from_key:'user',to_key:key,subject:v.slice(0,280),preview:'',is_read:false,date:''}); renderChat(); closeModal();
   const {error}=await sb.from('messages').insert({room:curRoom,from_key:'user',to_key:key,subject:v.slice(0,280),preview:'',is_read:false,delivered:false,source_file:'user',source_hash:'u-'+Date.now()+'-'+Math.random().toString(36).slice(2)});
-  if(error){ if(b){b.disabled=false;b.textContent='보내기 →';} alert('전송 실패: '+error.message); return; }
-  closeModal(); loadMessages();
+  if(!error) loadMessages();
 }
 async function doneAction(id,btn){
   if(!curRoom)return; if(btn){btn.disabled=true;btn.textContent='…';}
@@ -306,7 +305,7 @@ function subscribe(){ if(chan) sb.removeChannel(chan);
 async function enter(){ try{curTab=localStorage.getItem('wr_rtab')||'all';}catch(e){} await loadRooms(); await loadState(); await loadMessages(); subscribe(); }
 
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeModal(); });
-setInterval(()=>{ if(curRoom&&!document.getElementById('app').classList.contains('hide')) loadState(); }, 20000);
+setInterval(()=>{ if(curRoom&&!document.getElementById('app').classList.contains('hide')) loadState(); }, 8000);
 sb.auth.onAuthStateChange((_e,session)=>{ show(!!session); if(session)enter(); else if(chan){sb.removeChannel(chan);chan=null;} });
 sb.auth.getSession().then(({data:{session}})=>{ show(!!session); if(session)enter(); });
 </script>
