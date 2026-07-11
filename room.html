@@ -51,7 +51,7 @@ button:disabled{opacity:.5}#lmsg{font-size:12.5px;color:var(--ink-2);margin-top:
 .bub-tail{position:absolute;left:50%;margin-left:-5px;bottom:-6px;width:10px;height:10px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
 .bub-alert{border-color:var(--block);color:var(--block);font-weight:700;background:var(--block-bg)}
 .bub-alert .bub-tail{background:var(--block-bg);border-color:var(--block)}
-.orgchart{display:flex;flex-direction:column;align-items:center;width:100%}
+.orgchart{display:flex;flex-direction:column;align-items:center;width:auto}
 .tier{display:flex;justify-content:center;gap:8px 16px;flex-wrap:wrap}
 .conn{width:2px;height:15px;background:var(--line)}
 .advisor{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px dashed var(--line);border-radius:14px;padding:7px 16px 9px;background:linear-gradient(180deg,var(--panel-2),transparent);align-self:flex-start;margin-top:12px}
@@ -229,7 +229,7 @@ function renderStage(){
   if(leader) org+='<div class="tier">'+seatHtml(leader)+'</div><div class="conn"></div>';
   org+='<div class="tier tier-domains">'+domains.map(function(d){ var subs=subsOf(d.key);
     return '<div class="branch">'+seatHtml(d)+(subs.length?'<div class="subs">'+subs.map(seatHtml).join('')+'</div>':'')+'</div>'; }).join('')+'</div></div>';
-  const adv=overseer?'<div class="advisor"><div class="overseer-label">외부 고문</div>'+seatHtml(overseer)+'</div>':'';
+  const adv=overseer?'<div class="advisor">'+seatHtml(overseer)+'</div>':'';
   document.getElementById('stage').innerHTML=org+adv;
 }
 function renderChat(){
