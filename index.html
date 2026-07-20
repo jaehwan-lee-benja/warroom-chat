@@ -130,7 +130,16 @@ function subscribe(){
 async function switchRoom(){ curRoom=document.getElementById('room').value; await loadMessages(); subscribe(); }
 async function enter(){ await loadRooms(); await loadMessages(); subscribe(); }
 
-sb.auth.onAuthStateChange((_e,session)=>{ show(!!session); if(session) enter(); else if(chan){ sb.removeChannel(chan); chan=null; } });
-sb.auth.getSession().then(({data:{session}})=>{ show(!!session); if(session) enter(); });
+// 접근 허용목록(작전판=관리자 전용). chat 스키마 RLS도 동일 이메일로 잠겨 있음(이중 방어).
+const ALLOW=['designerbenja@gmail.com'];
+function allowed(s){ return !!s && ALLOW.includes((((s.user&&s.user.email)||'')).toLowerCase()); }
+function gate(session){
+  if(session && !allowed(session)){ show(false); msg('이 계정은 작전판 접근 권한이 없습니다.'); if(chan){ sb.removeChannel(chan); chan=null; } return; }
+  show(!!session);
+  if(session) enter();
+  else if(chan){ sb.removeChannel(chan); chan=null; }
+}
+sb.auth.onAuthStateChange((_e,session)=>gate(session));
+sb.auth.getSession().then(({data:{session}})=>gate(session));
 </script>
 </body></html>
